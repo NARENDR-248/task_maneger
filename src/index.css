@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root,
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html,
+body {
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+html.dark-mode,
+body.dark-mode {
+  background: radial-gradient(circle at top, rgba(56,189,248,0.08), transparent 25%),
+    linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  color: #f8fafc;
+}
+
+html.light-mode,
+body.light-mode {
+  background: radial-gradient(circle at top, rgba(56,189,248,0.1), transparent 25%),
+    linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #0f172a;
+}
+
+body.light-mode .text-white {
+  color: #0f172a !important;
+}
+
+body.light-mode .text-gray-300,
+body.light-mode .text-gray-400,
+body.light-mode .text-gray-500 {
+  color: #475569 !important;
+}
+
+body.light-mode .bg-white\/10,
+body.light-mode .bg-white\/5 {
+  background-color: rgba(255,255,255,0.85) !important;
+}
+
+body.light-mode .border-white\/10 {
+  border-color: rgba(148,163,184,0.3) !important;
+}
