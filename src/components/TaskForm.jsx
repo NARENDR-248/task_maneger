@@ -3,6 +3,16 @@ import React, {
 } from "react";
 
 import toast from "react-hot-toast";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import {
+  auth,
+  db,
+} from "../firebase/firebaseConfig";
 
 import {
   useTheme,
@@ -143,32 +153,59 @@ const TaskForm = ({
     };
 
   // Submit
-  const handleSubmit =
-    (e) => {
+ const handleSubmit =
+  async (e) => {
 
-      e.preventDefault();
+    e.preventDefault();
 
-      // Validation
-      if (
-        !validateForm()
-      ) {
+    // Validation
+    if (
+      !validateForm()
+    ) {
 
-        toast.error(
-          "Please fill all fields!"
-        );
+      toast.error(
+        "Please fill all fields!"
+      );
 
-        return;
-      }
+      return;
+    }
+
+    try {
+
+      // Current User
+      const user =
+        auth.currentUser;
+
+      // Task Object
+      const newTask = {
+
+        ...formData,
+
+        userId:
+          user?.uid,
+
+        createdAt:
+          serverTimestamp(),
+      };
+
+      // Store In Firestore
+      await addDoc(
+        collection(
+          db,
+          "tasks"
+        ),
+        newTask
+      );
 
       // Send To Parent
-      addTask(formData);
+      addTask(newTask);
 
-      // Success
+      // Success Toast
       toast.success(
         "Task added successfully 🚀"
       );
 
-      // Reset
+      // Reset Form
       setFormData({
 
         category:
@@ -182,7 +219,16 @@ const TaskForm = ({
       });
 
       setErrors({});
-    };
+
+    } catch (error) {
+
+      console.log(error);
+
+      toast.error(
+        "Failed to add task"
+      );
+    }
+  };
 
   return (
 

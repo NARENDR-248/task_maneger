@@ -45,8 +45,8 @@ const TaskCard = ({
 
     <div
 
-      // Navigate to Details Page
-      onClick={() => navigate(`/task/${task.id}`)}
+      // Navigate to Details Page (pass task in state so details can show local tasks)
+      onClick={() => navigate(`/task/${task.id}`, { state: { task } })}
 
       data-aos="fade-up"
 
