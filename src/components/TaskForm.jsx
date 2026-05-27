@@ -1,305 +1,419 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+} from "react";
+
 import toast from "react-hot-toast";
 
 import {
   useTheme,
 } from "../context/ThemeContext";
 
-const TaskForm = ({ addTask }) => {
+const TaskForm = ({
+  addTask,
+}) => {
 
   // Theme Context
-  const { darkMode } = useTheme();
+  const { darkMode } =
+    useTheme();
 
-  // States
-  const [task, setTask] = useState("");
+  // Dynamic Form JSON
+  const formFields = [
 
-  const [description, setDescription] =
-    useState("");
+    {
+      label: "Task Name",
+      type: "text",
+      name: "task",
+      placeholder:
+        "Enter task name",
+    },
 
-  const [category, setCategory] =
-    useState("Work");
+    {
+      label:
+        "Task Description",
 
-  const [dueDate, setDueDate] =
-    useState("");
+      type: "text",
 
-  const [important, setImportant] =
-    useState(false);
+      name:
+        "description",
 
-  const [urgent, setUrgent] =
-    useState(false);
+      placeholder:
+        "Enter task description",
+    },
 
-  // Handle Submit
-  const handleSubmit = (e) => {
+    {
+      label: "Category",
+      type: "dropdown",
+      name: "category",
 
-    e.preventDefault();
+      options: [
+        "Work",
+        "Personal",
+        "Study",
+        "Health",
+      ],
+    },
 
-    // Validation
-    if (
-      task.trim() === "" ||
-      description.trim() === ""
-    ) {
+    {
+      label: "Due Date",
+      type: "date",
+      name: "dueDate",
+    },
 
-      toast.error(
-        "Please fill all fields!",
-        {
-          duration: 2000,
+    {
+      label: "Important",
+      type: "checkbox",
+      name: "important",
+    },
 
-          style: {
-            background: "#0F172A",
-            color: "#fff",
-            border: "1px solid #EF4444",
-            padding: "16px",
-            borderRadius: "16px",
-          },
+    {
+      label: "Urgent",
+      type: "checkbox",
+      name: "urgent",
+    },
+  ];
+
+  // Form State
+  const [formData,
+    setFormData] =
+    useState({
+
+      category: "Work",
+
+      important: false,
+
+      urgent: false,
+    });
+
+  // Error State
+  const [errors,
+    setErrors] =
+    useState({});
+
+  // Handle Change
+  const handleChange =
+    (e, field) => {
+
+      const value =
+        field.type ===
+        "checkbox"
+          ? e.target.checked
+          : e.target.value;
+
+      setFormData({
+        ...formData,
+
+        [field.name]:
+          value,
+      });
+    };
+
+  // Validation
+  const validateForm =
+    () => {
+
+      let newErrors = {};
+
+      formFields.forEach(
+        (field) => {
+
+          if (
+            field.type !==
+              "checkbox" &&
+
+            !formData[
+              field.name
+            ]
+          ) {
+
+            newErrors[
+              field.name
+            ] =
+              `${field.label} is required`;
+          }
         }
       );
 
-      return;
-    }
+      setErrors(
+        newErrors
+      );
 
-    // Create Task Object
-    const newTask = {
-
-      text: task,
-
-      description: description,
-
-      category: category,
-
-      dueDate: dueDate,
-
-      important: important,
-
-      urgent: urgent,
+      return Object.keys(
+        newErrors
+      ).length === 0;
     };
 
-    // Send Data to Parent
-    addTask(newTask);
+  // Submit
+  const handleSubmit =
+    (e) => {
 
-    // Success Toast
-    toast.success(
-      "Task added successfully 🚀",
-      {
-        duration: 2000,
+      e.preventDefault();
 
-        style: {
-          background: "#0F172A",
-          color: "#fff",
-          border: "1px solid #06B6D4",
-          padding: "16px",
-          borderRadius: "16px",
-        },
+      // Validation
+      if (
+        !validateForm()
+      ) {
+
+        toast.error(
+          "Please fill all fields!"
+        );
+
+        return;
       }
-    );
 
-    // Reset
-    setTask("");
+      // Send To Parent
+      addTask(formData);
 
-    setDescription("");
+      // Success
+      toast.success(
+        "Task added successfully 🚀"
+      );
 
-    setCategory("Work");
+      // Reset
+      setFormData({
 
-    setDueDate("");
+        category:
+          "Work",
 
-    setImportant(false);
+        important:
+          false,
 
-    setUrgent(false);
-  };
+        urgent:
+          false,
+      });
+
+      setErrors({});
+    };
 
   return (
 
     <form
-      onSubmit={handleSubmit}
+      onSubmit={
+        handleSubmit
+      }
       className="space-y-6"
     >
 
-      {/* Task Name */}
-      <div>
+      {/* Dynamic Fields */}
+      {
+        formFields.map(
+          (
+            field,
+            index
+          ) => (
 
-        <label
-          className={`block text-sm mb-2 ${
-            darkMode
-              ? "text-gray-300"
-              : "text-gray-700"
-          }`}
-        >
-          Task Name
-        </label>
+            <div
+              key={index}
+            >
 
-        <input
-          type="text"
-          placeholder="Enter task name"
-          value={task}
-          onChange={(e) =>
-            setTask(e.target.value)
-          }
-          className={`w-full px-5 py-4 rounded-2xl border outline-none transition duration-300 ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white placeholder-gray-400"
-              : "bg-white border-gray-300 text-black placeholder-gray-500"
-          } focus:ring-2 focus:ring-cyan-500`}
-        />
+              {/* Label */}
+              <label
+                className={`block text-sm mb-2 ${
+                  darkMode
+                    ? "text-gray-300"
+                    : "text-gray-700"
+                }`}
+              >
 
-      </div>
+                {
+                  field.label
+                }
 
-      {/* Description */}
-      <div>
+              </label>
 
-        <label
-          className={`block text-sm mb-2 ${
-            darkMode
-              ? "text-gray-300"
-              : "text-gray-700"
-          }`}
-        >
-          Task Description
-        </label>
+              {/* Text */}
+              {
+                (
+                  field.type ===
+                    "text" ||
 
-        <textarea
-          rows="4"
-          placeholder="Enter task details..."
-          value={description}
-          onChange={(e) =>
-            setDescription(e.target.value)
-          }
-          className={`w-full px-5 py-4 rounded-2xl border outline-none resize-none transition duration-300 ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white placeholder-gray-400"
-              : "bg-white border-gray-300 text-black placeholder-gray-500"
-          } focus:ring-2 focus:ring-cyan-500`}
-        ></textarea>
+                  field.type ===
+                    "date"
+                ) && (
 
-      </div>
+                  <input
+                    type={
+                      field.type
+                    }
 
-      {/* Category + Due Date */}
-      <div className="grid md:grid-cols-2 gap-5">
+                    placeholder={
+                      field.placeholder
+                    }
 
-        {/* Category */}
-        <div>
+                    value={
+                      formData[
+                        field.name
+                      ] || ""
+                    }
 
-          <label
-            className={`block text-sm mb-2 ${
-              darkMode
-                ? "text-gray-300"
-                : "text-gray-700"
-            }`}
-          >
-            Category
-          </label>
+                    onChange={(
+                      e
+                    ) =>
+                      handleChange(
+                        e,
+                        field
+                      )
+                    }
 
-          <select
-            value={category}
-            onChange={(e) =>
-              setCategory(e.target.value)
-            }
-            className={`w-full px-5 py-4 rounded-2xl border outline-none ${
-              darkMode
-                ? "bg-slate-900 border-white/10 text-white"
-                : "bg-white border-gray-300 text-black"
-            }`}
-          >
+                    className={`w-full px-5 py-4 rounded-2xl border outline-none transition duration-300 ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white placeholder-gray-400"
+                        : "bg-white border-gray-300 text-black placeholder-gray-500"
+                    } focus:ring-2 focus:ring-cyan-500`}
+                  />
+                )
+              }
 
-            <option>Work</option>
+              {/* Dropdown */}
+              {
+                field.type ===
+                  "dropdown" && (
 
-            <option>Personal</option>
+                  <select
+                    value={
+                      formData[
+                        field.name
+                      ] || ""
+                    }
 
-            <option>Study</option>
+                    onChange={(
+                      e
+                    ) =>
+                      handleChange(
+                        e,
+                        field
+                      )
+                    }
 
-            <option>Health</option>
+                    className={`w-full px-5 py-4 rounded-2xl border outline-none ${
+                      darkMode
+                        ? "bg-slate-900 border-white/10 text-white"
+                        : "bg-white border-gray-300 text-black"
+                    }`}
+                  >
 
-          </select>
+                    {
+                      field.options.map(
+                        (
+                          option,
+                          i
+                        ) => (
 
-        </div>
+                          <option
+                            key={i}
+                            value={
+                              option
+                            }
+                          >
 
-        {/* Due Date */}
-        <div>
+                            {
+                              option
+                            }
 
-          <label
-            className={`block text-sm mb-2 ${
-              darkMode
-                ? "text-gray-300"
-                : "text-gray-700"
-            }`}
-          >
-            Due Date
-          </label>
+                          </option>
+                        )
+                      )
+                    }
 
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) =>
-              setDueDate(e.target.value)
-            }
-            className={`w-full px-5 py-4 rounded-2xl border outline-none ${
-              darkMode
-                ? "bg-white/5 border-white/10 text-white"
-                : "bg-white border-gray-300 text-black"
-            }`}
-          />
+                  </select>
+                )
+              }
 
-        </div>
+              {/* Checkbox */}
+              {
+                field.type ===
+                  "checkbox" && (
 
-      </div>
+                  <label
+                    className={`flex items-center gap-3 px-5 py-4 rounded-2xl border ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white"
+                        : "bg-white border-gray-300 text-black"
+                    }`}
+                  >
 
-      {/* Checkboxes */}
-      <div className="flex flex-wrap gap-5">
+                    <input
+                      type="checkbox"
 
-        {/* Important */}
-        <label
-          className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white"
-              : "bg-white border-gray-300 text-black"
-          }`}
-        >
+                      checked={
+                        formData[
+                          field.name
+                        ] || false
+                      }
 
-          <input
-            type="checkbox"
-            checked={important}
-            onChange={(e) =>
-              setImportant(e.target.checked)
-            }
-            className="w-5 h-5 accent-red-500"
-          />
+                      onChange={(
+                        e
+                      ) =>
+                        handleChange(
+                          e,
+                          field
+                        )
+                      }
 
-          <span>
-            🔥 Important
-          </span>
+                      className="w-5 h-5 accent-cyan-500"
+                    />
 
-        </label>
+                    {
+                      field.label
+                    }
 
-        {/* Urgent */}
-        <label
-          className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white"
-              : "bg-white border-gray-300 text-black"
-          }`}
-        >
+                  </label>
+                )
+              }
 
-          <input
-            type="checkbox"
-            checked={urgent}
-            onChange={(e) =>
-              setUrgent(e.target.checked)
-            }
-            className="w-5 h-5 accent-yellow-500"
-          />
+              {/* Error */}
+              {
+                errors[
+                  field.name
+                ] && (
 
-          <span>
-            ⚡ Urgent
-          </span>
+                  <p className="text-red-400 text-sm mt-1">
 
-        </label>
+                    {
+                      errors[
+                        field.name
+                      ]
+                    }
 
-      </div>
+                  </p>
+                )
+              }
 
-      {/* Button */}
+            </div>
+          )
+        )
+      }
+
+      {/* Submit Button */}
       <button
         className="w-full md:w-auto px-8 py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
       >
         Add Task
       </button>
+
+      {/* Result */}
+      <div
+        className={`p-5 rounded-2xl ${
+          darkMode
+            ? "bg-white/5 text-white"
+            : "bg-gray-100 text-black"
+        }`}
+      >
+
+        <h2 className="font-bold mb-3">
+          Live Form Data
+        </h2>
+
+        <pre className="text-sm overflow-auto">
+          {
+            JSON.stringify(
+              formData,
+              null,
+              2
+            )
+          }
+        </pre>
+
+      </div>
 
     </form>
   );

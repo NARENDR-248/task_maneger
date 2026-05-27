@@ -7,11 +7,31 @@ import {
   Link,
 } from "react-router-dom";
 
+import {
+  FcGoogle,
+} from "react-icons/fc";
+
 import toast from "react-hot-toast";
 
 import {
   useTheme,
 } from "../context/ThemeContext";
+
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+
+import {
+  doc,
+  setDoc,
+} from "firebase/firestore";
+
+import {
+  auth,
+  db,
+} from "../firebase/firebaseConfig";
 
 const Register = () => {
 
@@ -32,71 +52,319 @@ const Register = () => {
   const passwordRef =
     useRef();
 
-  // Register
-  const handleRegister = (e) => {
+  // Google Provider
+  const provider =
+    new GoogleAuthProvider();
 
-    e.preventDefault();
+  // Dynamic Form Fields
+  const formFields = [
 
-    const name =
-      nameRef.current.value;
+    {
+      label: "Name",
+      type: "text",
+      name: "name",
+      placeholder:
+        "Enter Name",
+    },
 
-    const email =
-      emailRef.current.value;
+    {
+      label: "Email",
+      type: "email",
+      name: "email",
+      placeholder:
+        "Enter Email",
+    },
 
-    const password =
-      passwordRef.current.value;
+    {
+      label: "Password",
+      type: "password",
+      name: "password",
+      placeholder:
+        "Enter Password",
+    },
+  ];
 
-    // Validation
-    if (
-      !name ||
-      !email ||
-      !password
-    ) {
+  // Register Function
+  const handleRegister =
+    async (e) => {
 
-      toast.error(
-        "Please fill all fields"
-      );
+      e.preventDefault();
 
-      return;
-    }
+      // Get Values
+      const name =
+        nameRef.current.value;
 
-    // Store User
-    const userData = {
-      name,
-      email,
-      password,
+      const email =
+        emailRef.current.value;
+
+      const password =
+        passwordRef.current.value;
+
+      // Validation
+      if (!name) {
+
+        toast.error(
+          "Name is required"
+        );
+
+        return;
+      }
+
+      if (
+        name.length < 3
+      ) {
+
+        toast.error(
+          "Name must be at least 3 characters"
+        );
+
+        return;
+      }
+
+      if (!email) {
+
+        toast.error(
+          "Email is required"
+        );
+
+        return;
+      }
+
+      // Email Regex
+      const emailPattern =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (
+        !emailPattern.test(email)
+      ) {
+
+        toast.error(
+          "Enter valid email"
+        );
+
+        return;
+      }
+
+      if (!password) {
+
+        toast.error(
+          "Password is required"
+        );
+
+        return;
+      }
+
+      if (
+        password.length < 6
+      ) {
+
+        toast.error(
+          "Password must be at least 6 characters"
+        );
+
+        return;
+      }
+
+      try {
+
+        // Create Firebase User
+        const userCredential =
+          await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+        // Current User
+        const user =
+          userCredential.user;
+
+        // User Data
+        const userData = {
+          name,
+          email,
+          uid:
+            user.uid,
+
+          createdAt:
+            new Date(),
+        };
+
+        // Store User In Firestore
+        await setDoc(
+          doc(
+            db,
+            "users",
+            user.uid
+          ),
+          userData
+        );
+
+        // Store User In LocalStorage
+        localStorage.setItem(
+          "user",
+          JSON.stringify(userData)
+        );
+
+        // Success Toast
+        toast.success(
+          "Registration Successful 🚀"
+        );
+
+        // Clear Inputs
+        nameRef.current.value =
+          "";
+
+        emailRef.current.value =
+          "";
+
+        passwordRef.current.value =
+          "";
+
+        // Navigate
+        navigate("/home");
+
+      } catch (error) {
+
+        console.log(error);
+
+        // Firebase Errors
+        if (
+          error.code ===
+          "auth/email-already-in-use"
+        ) {
+
+          toast.error(
+            "Email already exists"
+          );
+
+        } else if (
+          error.code ===
+          "auth/invalid-email"
+        ) {
+
+          toast.error(
+            "Invalid email format"
+          );
+
+        } else if (
+          error.code ===
+          "auth/weak-password"
+        ) {
+
+          toast.error(
+            "Password is too weak"
+          );
+
+        } else {
+
+          toast.error(
+            "Something went wrong"
+          );
+        }
+      }
     };
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(userData)
-    );
+  // Google Authentication
+  const handleGoogleAuth =
+    async () => {
 
-    toast.success(
-      "Registration Successful 🚀"
-    );
+      try {
 
-    navigate("/login");
-  };
+        // Google Popup
+        const result =
+          await signInWithPopup(
+            auth,
+            provider
+          );
+
+        // Current User
+        const user =
+          result.user;
+
+        // User Data
+        const userData = {
+          name:
+            user.displayName,
+
+          email:
+            user.email,
+
+          uid:
+            user.uid,
+
+          photo:
+            user.photoURL,
+
+          createdAt:
+            new Date(),
+        };
+
+        // Store User In Firestore
+        await setDoc(
+          doc(
+            db,
+            "users",
+            user.uid
+          ),
+          userData
+        );
+
+        // Store User In LocalStorage
+        localStorage.setItem(
+          "user",
+          JSON.stringify(userData)
+        );
+
+        toast.success(
+          "Google Login Success 🚀"
+        );
+
+        // Navigate
+        navigate("/home");
+
+      } catch (error) {
+
+        console.log(error);
+
+        toast.error(
+          "Google Login Failed"
+        );
+      }
+    };
 
   return (
 
-    <div className="flex items-center justify-center min-h-screen px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 overflow-hidden">
 
       <form
         onSubmit={handleRegister}
-        className={`w-full max-w-md rounded-3xl p-8 space-y-5 border shadow-2xl backdrop-blur-2xl transition-all duration-500 ${
+        className={`w-full max-w-md rounded-[32px] p-8 md:p-10 space-y-6 border shadow-[0_20px_60px_rgba(0,0,0,0.4)] backdrop-blur-3xl transition-all duration-500 ${
           darkMode
             ? "bg-white/10 border-white/10"
-            : "bg-white border-gray-300"
+            : "bg-white/80 border-gray-200"
         }`}
       >
 
         {/* Heading */}
-        <div className="text-center">
+        <div className="text-center space-y-3">
 
+          {/* Logo */}
+          <div className="flex justify-center">
+
+            <div
+              className="w-20 h-20 rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center shadow-lg"
+            >
+
+              <FcGoogle size={40} />
+
+            </div>
+
+          </div>
+
+          {/* Title */}
           <h1
-            className={`text-4xl font-bold ${
+            className={`text-5xl font-extrabold tracking-tight ${
               darkMode
                 ? "text-white"
                 : "text-black"
@@ -105,75 +373,126 @@ const Register = () => {
             Register
           </h1>
 
+          {/* Subtitle */}
           <p
-            className={`mt-2 ${
+            className={`text-sm ${
               darkMode
                 ? "text-gray-300"
                 : "text-gray-600"
             }`}
           >
-            Create your account
+            Create your account and start your journey
           </p>
 
         </div>
 
-        {/* Name */}
-        <input
-          ref={nameRef}
-          type="text"
-          placeholder="Enter Name"
-          className={`w-full px-5 py-4 rounded-2xl border outline-none transition-all duration-300 ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white placeholder-gray-400 focus:border-cyan-400"
-              : "bg-gray-100 border-gray-300 text-black placeholder-gray-500 focus:border-cyan-500"
-          }`}
-        />
+        {/* Dynamic Inputs */}
+        {
+          formFields.map(
+            (
+              field,
+              index
+            ) => (
 
-        {/* Email */}
-        <input
-          ref={emailRef}
-          type="email"
-          placeholder="Enter Email"
-          className={`w-full px-5 py-4 rounded-2xl border outline-none transition-all duration-300 ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white placeholder-gray-400 focus:border-cyan-400"
-              : "bg-gray-100 border-gray-300 text-black placeholder-gray-500 focus:border-cyan-500"
-          }`}
-        />
+              <div
+                key={index}
+                className="space-y-2"
+              >
 
-        {/* Password */}
-        <input
-          ref={passwordRef}
-          type="password"
-          placeholder="Enter Password"
-          className={`w-full px-5 py-4 rounded-2xl border outline-none transition-all duration-300 ${
-            darkMode
-              ? "bg-white/5 border-white/10 text-white placeholder-gray-400 focus:border-cyan-400"
-              : "bg-gray-100 border-gray-300 text-black placeholder-gray-500 focus:border-cyan-500"
-          }`}
-        />
+                {/* Label */}
+                <label
+                  className={`text-sm font-medium ${
+                    darkMode
+                      ? "text-gray-200"
+                      : "text-gray-700"
+                  }`}
+                >
 
-        {/* Button */}
+                  {field.label}
+
+                </label>
+
+                {/* Input */}
+                <input
+                  ref={
+                    field.name === "name"
+                      ? nameRef
+                      : field.name === "email"
+                      ? emailRef
+                      : passwordRef
+                  }
+
+                  type={field.type}
+
+                  placeholder={
+                    field.placeholder
+                  }
+
+                  className={`w-full px-5 py-4 rounded-2xl border outline-none transition-all duration-300 text-lg ${
+                    darkMode
+                      ? "bg-white/5 border-white/10 text-white placeholder-gray-400 focus:border-cyan-400 focus:bg-white/10"
+                      : "bg-gray-100 border-gray-300 text-black placeholder-gray-500 focus:border-cyan-500 focus:bg-white"
+                  }`}
+                />
+
+              </div>
+            )
+          )
+        }
+
+        {/* Register Button */}
         <button
-          className="w-full py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold transition-all duration-300 hover:scale-[1.02]"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] shadow-lg"
         >
           Register
         </button>
 
+        {/* Divider */}
+        <div className="relative flex items-center justify-center">
+
+          <div className="w-full border-t border-white/10"></div>
+
+          <span
+            className={`px-4 text-sm absolute ${
+              darkMode
+                ? "bg-slate-900 text-gray-400"
+                : "bg-white text-gray-500"
+            }`}
+          >
+            OR
+          </span>
+
+        </div>
+
+        {/* Google Button */}
+        <button
+          type="button"
+          onClick={
+            handleGoogleAuth
+          }
+          className="w-full py-4 rounded-2xl bg-white hover:bg-gray-100 text-black font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-md border border-gray-200"
+        >
+
+          <FcGoogle size={26} />
+
+          Continue with Google
+
+        </button>
+
         {/* Login Link */}
         <p
-          className={`text-center ${
+          className={`text-center text-sm ${
             darkMode
               ? "text-gray-300"
               : "text-gray-600"
           }`}
         >
 
-          Already have account?
+          Already have an account?
 
           <Link
             to="/login"
-            className="text-cyan-500 font-semibold ml-2 hover:underline"
+            className="text-cyan-400 font-semibold ml-2 hover:underline"
           >
             Login
           </Link>
