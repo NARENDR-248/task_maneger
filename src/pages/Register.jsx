@@ -335,7 +335,13 @@ const Register = () => {
 
   return (
 
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 overflow-hidden">
+   <div
+  className={`min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden transition-all duration-500 ${
+    darkMode
+      ? "bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950"
+      : "bg-gradient-to-br from-cyan-50 via-white to-blue-100"
+  }`}
+>
 
       <form
         onSubmit={handleRegister}
